@@ -1,8 +1,10 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:movieapp/apilinks/allapi.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../apilinks/allapi.dart';
+import 'loginPage.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,6 +15,20 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> trendinglist = [];
+  String? username;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUsername();
+  }
+
+  Future<void> _loadUsername() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      username = prefs.getString('username');
+    });
+  }
 
   Future<void> trendinglisthome() async {
     var trendingweekresponse = await http.get(Uri.parse(trendingweekurl));
@@ -75,6 +91,22 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             title: Text('Trending', style: TextStyle(color: Colors.white, fontSize: 16)),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  if (username == null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => LoginPage()),
+                    );
+                  }
+                },
+                child: Text(
+                  username ?? 'Login',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
           ),
           SliverList(
             delegate: SliverChildListDelegate([
