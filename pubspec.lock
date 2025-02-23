@@ -462,7 +462,6 @@ packages:
     version: "2.4.1"
 =======
     version: "1.9.1"
->>>>>>> 4ecee47f2b55de12bb1141608442a1dfeaae3f53
   path_provider_linux:
     dependency: transitive
     description:
