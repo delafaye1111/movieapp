@@ -6,6 +6,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:movieapp/HomePage/SectionPage/movies.dart';
 import 'package:movieapp/HomePage/SectionPage/tvseries.dart';
 import 'package:movieapp/HomePage/SectionPage/upcoming.dart';
+import 'package:movieapp/repeatedfunction/searchbarfunc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'loginPage.dart';
 
@@ -191,7 +192,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
           SliverList(
             delegate: SliverChildListDelegate([
-              Center(child: Text('Sample Text')),
+              searchbarfunc(),
+              // Center(child: Text('Sample Text')),
               Container(
                 height: 45,
                 width: MediaQuery.of(context).size.width,

@@ -18,10 +18,10 @@ class MoviesDetails extends StatefulWidget {
 
 class _MoviesDetailsState extends State<MoviesDetails> {
   List<Map<String, dynamic>> MoviesDetails = [];
-  List<Map<String, dynamic>> UserReviews = [];
-  List<Map<String, dynamic>> Similarmovieslist = [];
-  List<Map<String, dynamic>> Recommendedmovieslist = [];
-  List<Map<String, dynamic>> Movietrailerslist = [];
+  List<Map<String, dynamic>> userReviews = [];
+  List<Map<String, dynamic>> similarmovieslist = [];
+  List<Map<String, dynamic>> recommendedmovieslist = [];
+  List<Map<String, dynamic>> movietrailerslist = [];
 
   List MoviesGeneres = [];
 
@@ -67,7 +67,7 @@ class _MoviesDetailsState extends State<MoviesDetails> {
     if (UserReviewresponse.statusCode == 200) {
       var UserReviewjson = jsonDecode(UserReviewresponse.body);
       for (var i = 0; i < UserReviewjson['results'].length; i++) {
-        UserReviews.add({
+        userReviews.add({
           "name": UserReviewjson['results'][i]['author'],
           "review": UserReviewjson['results'][i]['content'],
           "rating":
@@ -92,7 +92,7 @@ class _MoviesDetailsState extends State<MoviesDetails> {
     if (similarmoviesresponse.statusCode == 200) {
       var similarmoviesjson = jsonDecode(similarmoviesresponse.body);
       for (var i = 0; i < similarmoviesjson['results'].length; i++) {
-        Similarmovieslist.add({
+        similarmovieslist.add({
           "poster_path": similarmoviesjson['results'][i]['poster_path'],
           "name": similarmoviesjson['results'][i]['title'],
           "vote_average": similarmoviesjson['results'][i]['vote_average'],
@@ -108,7 +108,7 @@ class _MoviesDetailsState extends State<MoviesDetails> {
     if (recommendedmoviesresponse.statusCode == 200) {
       var recommendedmoviesjson = jsonDecode(recommendedmoviesresponse.body);
       for (var i = 0; i < recommendedmoviesjson['results'].length; i++) {
-        Recommendedmovieslist.add({
+        recommendedmovieslist.add({
           "poster_path": recommendedmoviesjson['results'][i]['poster_path'],
           "name": recommendedmoviesjson['results'][i]['title'],
           "vote_average": recommendedmoviesjson['results'][i]['vote_average'],
@@ -124,14 +124,14 @@ class _MoviesDetailsState extends State<MoviesDetails> {
       var movietrailersjson = jsonDecode(movietrailersresponse.body);
       for (var i = 0; i < movietrailersjson['results'].length; i++) {
         if (movietrailersjson['results'][i]['type'] == "Trailer") {
-          Movietrailerslist.add({
+          movietrailerslist.add({
             "key": movietrailersjson['results'][i]['key'],
           });
         }
       }
-      Movietrailerslist.add({'key': 'aJ0cZTcTh90'});
+      movietrailerslist.add({'key': 'aJ0cZTcTh90'});
     } else {}
-    print(Movietrailerslist);
+    print(movietrailerslist);
   }
 
   @override
@@ -176,8 +176,7 @@ class _MoviesDetailsState extends State<MoviesDetails> {
                       collapseMode: CollapseMode.parallax,
                       background: FittedBox(
                         fit: BoxFit.fill,
-                        child: TrailerWatch(
-                          Movietrailerslist[0]['key']
+                        child: TrailerWatch(movietrailerslist[0]['key']
                           ,
                         ),
                       ),
@@ -238,7 +237,7 @@ class _MoviesDetailsState extends State<MoviesDetails> {
                           child: Text(MoviesDetails[0]['overview'].toString())),
                       Padding(
                           padding: EdgeInsets.only(left: 20, top: 10),
-                          // child: UserReview(UserReviews)
+                          child: UserReview(userReviews)
                           ),
                       Padding(
                           padding: EdgeInsets.only(left: 20, top: 20),
@@ -248,10 +247,10 @@ class _MoviesDetailsState extends State<MoviesDetails> {
                           padding: EdgeInsets.only(left: 20, top: 20),
                           child: Text('Budget : ' +
                               MoviesDetails[0]['budget'].toString())),
-                      sliderlist(Similarmovieslist, 'Similar Movies', 'movie',
-                          Similarmovieslist.length),
-                      sliderlist(Recommendedmovieslist, 'Recommended Movies',
-                          'movie', Recommendedmovieslist.length),
+                      sliderlist(similarmovieslist, 'Similar Movies', 'movie',
+                          similarmovieslist.length),
+                      sliderlist(recommendedmovieslist, 'Recommended Movies',
+                          'movie', recommendedmovieslist.length),
                     ]),
                   )
                 ],
