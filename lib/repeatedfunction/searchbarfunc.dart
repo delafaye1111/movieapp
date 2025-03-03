@@ -19,26 +19,26 @@ class _searchbarfuncState extends State<searchbarfunc> {
   var vall;
 
   Future<void> searchListFunction(String val) async {
-    var searchurl = Uri.parse(
-        'https://api.themoviedb.org/3/search/multi?api_key=$apikey&query=$val');
-    var searchresponse = await http.get(searchurl);
+    var searchurl = 'https://api.themoviedb.org/3/search/multi?api_key=$apikey&query=$val';
+    var searchresponse = await http.get(Uri.parse(searchurl));
     if (searchresponse.statusCode == 200) {
       var tempdata = jsonDecode(searchresponse.body);
       var searchjson = tempdata['results'];
-
-      for (var item in searchjson) {
-        if (item['id'] != null &&
-            item['poster_path'] != null &&
-            item['vote_average'] != null &&
-            item['media_type'] != null) {
+for (var i = 0; i < searchjson.length; i++) {
+        //only add value if all are present
+        if (searchjson[i]['id'] != null &&
+            searchjson[i]['poster_path'] != null &&
+            searchjson[i]['vote_average'] != null &&
+            searchjson[i]['media_type'] != null) {
           searchResult.add({
-            'id': item['id'],
-            'poster_path': item['poster_path'],
-            'vote_average': item['vote_average'],
-            'media_type': item['media_type'],
-            'popularity': item['popularity'],
-            'overview': item['overview'],
+            'id': searchjson[i]['id'],
+            'poster_path': searchjson[i]['poster_path'],
+            'vote_average': searchjson[i]['vote_average'],
+            'media_type': searchjson[i]['media_type'],
+            'popularity': searchjson[i]['popularity'],
+            'overview': searchjson[i]['overview'],
           });
+
 
           if (searchResult.length > 20) {
             searchResult.removeRange(20, searchResult.length);
@@ -69,6 +69,8 @@ class _searchbarfuncState extends State<searchbarfunc> {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: TextField(
+                autofocus: false,
+                controller: searchText,
                   onSubmitted: (value) {
                     searchResult.clear();
                     setState(() {
