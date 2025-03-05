@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:movieapp/HomePage/HomePage.dart';
+import 'package:movieapp/repeatedfunction/favoriteandshare.dart';
 import 'package:movieapp/repeatedfunction/slider.dart';
 import 'package:movieapp/repeatedfunction/trailerui.dart';
 import 'package:movieapp/repeatedfunction/userreview.dart';
@@ -184,6 +185,11 @@ class _MoviesDetailsState extends State<MoviesDetails> {
                   ),
                   SliverList(
                     delegate: SliverChildListDelegate([
+                      addtofavoriate(
+                        id: widget.id,
+                        type: 'movie',
+                        Details: MoviesDetails,
+                      ),
                       Column(
                         children: [
                           Row(

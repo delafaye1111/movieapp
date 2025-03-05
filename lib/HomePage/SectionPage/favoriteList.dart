@@ -129,7 +129,7 @@ class _FavoriteMoviesState extends State<FavoriteMovies> {
                                   tileColor: Color.fromRGBO(24, 24, 24, 1),
                                   textColor: Colors.white,
                                   title:
-                                      Text(snapshot.data![index]['tmdbname']),
+                                      Text(snapshot.data![index]['tmdbname'] ?? 'No name'),
                                   subtitle: Row(children: [
                                     Icon(
                                       Icons.star,

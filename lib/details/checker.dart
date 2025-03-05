@@ -5,7 +5,7 @@ import 'package:movieapp/details/tvseriesdetail.dart';
 class descriptioncheckui extends StatefulWidget {
   var newid;
   var newtype;
-  descriptioncheckui(this.newid, this.newtype);
+  descriptioncheckui(this.newid, this.newtype, {super.key});
 
   @override
   State<descriptioncheckui> createState() => _descriptioncheckuiState();
@@ -13,25 +13,34 @@ class descriptioncheckui extends StatefulWidget {
 
 class _descriptioncheckuiState extends State<descriptioncheckui> {
   checktype() {
-    if (widget.newtype == 'movie') {
-      return MoviesDetails(widget.newid);
-    } else if (widget.newtype == 'tv') {
-      return TvSeriesDetails(widget.newid);
+    if (widget.newtype.toString() == 'movie') {
+      return MoviesDetails(
+        widget.newid,
+      );
+    } else if (widget.newtype.toString() == 'tv') {
+      return TvSeriesDetails(
+        widget.newid,
+      );
+    } else if (widget.newtype.toString() == 'person') {
+      // return persondescriptionui(widget.id);
     } else {
-      return errorui();
+      return errorui(context);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold();
+    return checktype();
   }
 }
 
-Widget errorui() {
+Widget errorui(context) {
   return Scaffold(
+    appBar: AppBar(
+      title: const Text('Error'),
+    ),
     body: Center(
-      child: Text("Error"),
+      child: Text('no Such page found'),
     ),
   );
 }

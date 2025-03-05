@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:movieapp/HomePage/HomePage.dart';
+import 'package:movieapp/repeatedfunction/favoriteandshare.dart';
 import 'package:movieapp/repeatedfunction/slider.dart';
 import 'package:movieapp/repeatedfunction/trailerui.dart';
 import 'package:movieapp/repeatedfunction/userreview.dart';
@@ -49,7 +50,7 @@ class _TvSeriesDetailsState extends State<TvSeriesDetails> {
       for (var i = 0; i < 1; i++) {
         TvSeriesDetails.add({
           "backdrop_path": tvseriesdetaildata['backdrop_path'],
-          "title": tvseriesdetaildata['title'],
+          "title": tvseriesdetaildata['original_name'],
           "vote_average": tvseriesdetaildata['vote_average'],
           "overview": tvseriesdetaildata['overview'],
           'status': tvseriesdetaildata['status'],
@@ -202,6 +203,11 @@ class _TvSeriesDetailsState extends State<TvSeriesDetails> {
                   ),
                   SliverList(
                     delegate: SliverChildListDelegate([
+                       addtofavoriate(
+                        id: widget.id,
+                        type: 'tv',
+                        Details: TvSeriesDetails,
+                      ),
                       Column(
                         children: [
                           Row(
