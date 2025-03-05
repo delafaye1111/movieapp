@@ -137,45 +137,6 @@ class _drawerfuncState extends State<drawerfunc> {
               //close drawer
               Navigator.pop(context);
             }),
-            // listtilefunc('Favorite', Icons.favorite, ontap: () {
-            //   Navigator.push(context,
-            //       MaterialPageRoute(builder: (context) => FavoriateMovies()));
-            // }),
-            listtilefunc('Our Blogs', FontAwesomeIcons.blogger,
-                ontap: () async {
-              //webview for blog
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => Scaffold(
-                            backgroundColor: Color.fromRGBO(18, 18, 18, 0.5),
-                            appBar: AppBar(
-                              backgroundColor: Color.fromRGBO(18, 18, 18, 0.9),
-                              title: Text('Our Blogs'),
-                            ),
-                            body: WebViewWidget(controller: controllerone),
-                          )));
-            }),
-            listtilefunc('Our Website', FontAwesomeIcons.solidNewspaper,
-                ontap: () async {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => Scaffold(
-                            backgroundColor: Color.fromRGBO(18, 18, 18, 0.5),
-                            appBar: AppBar(
-                              backgroundColor: Color.fromRGBO(18, 18, 18, 0.9),
-                              title: Text('flutter content'),
-                            ),
-                            body: WebViewWidget(controller: controllerone),
-                          )));
-            }),
-            listtilefunc('Subscribe US', FontAwesomeIcons.youtube,
-                ontap: () async {
-              var url =
-                  'https://www.youtube.com/channel/UCeJnnsTq-Lh9E16kCEK49rQ?sub_confirmation=1';
-              await launch(url);
-            }),
             listtilefunc('About', Icons.info, ontap: () {
               showDialog(
                   context: context,
@@ -183,7 +144,7 @@ class _drawerfuncState extends State<drawerfunc> {
                     return AlertDialog(
                       backgroundColor: Color.fromRGBO(18, 18, 18, 0.9),
                       title: Text(
-                          'This App is made by Niranjan Dahal.User can explore,get Details of latest Movies/series.TMDB API is used to fetch data.'),
+                          'This App is can explore,get Details of latest Movies/series.TMDB API is used to fetch data.'),
                       actions: [
                         TextButton(
                             onPressed: () {

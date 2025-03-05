@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 import 'homePage.dart';
+
 class LoginPage extends StatefulWidget {
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -9,33 +12,65 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
 
   Future<void> _login() async {
     String username = _usernameController.text;
     String password = _passwordController.text;
 
-    // Perform your login logic here, for example, an API call to authenticate the user
-    // For demonstration, let's assume the login is successful and we get a token
-    String token = 'dummy_token';
+    if (username.isEmpty || password.isEmpty) {
+      _showError("กรุณากรอก Username และ Password");
+      return;
+    }
 
-    // Save the token and username using shared_preferences
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('token', token);
-    await prefs.setString('username', username);
+    setState(() => _isLoading = true);
 
-    // Navigate to HomePage after successful login
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => HomePage()),
+    final url = Uri.parse("http://192.168.1.100/api/login");
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "username": username,
+          "password": password,
+        }),
+      );
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        String token = responseData["token"];
+
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', token);
+        await prefs.setString('username', username);
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage()),
+        );
+      } else {
+        _showError(responseData["error"] ?? "เกิดข้อผิดพลาดในการล็อคอิน");
+      }
+    } catch (e) {
+      print(e);
+      _showError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์");
+    }
+
+    setState(() => _isLoading = false);
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Login'),
-      ),
+      appBar: AppBar(title: Text('Login')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -50,10 +85,12 @@ class _LoginPageState extends State<LoginPage> {
               obscureText: true,
             ),
             SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _login,
-              child: Text('Login'),
-            ),
+            _isLoading
+                ? CircularProgressIndicator()
+                : ElevatedButton(
+                    onPressed: _login,
+                    child: Text('Login'),
+                  ),
           ],
         ),
       ),
