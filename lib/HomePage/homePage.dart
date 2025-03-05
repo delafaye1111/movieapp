@@ -21,6 +21,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   List<Map<String, dynamic>> trendinglist = [];
   String? username;
+
   @override
   void initState() {
     super.initState();
@@ -75,7 +76,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     TabController _tabController = TabController(length: 3, vsync: this);
 
     return Scaffold(
-      drawer: drawerfunc(),
+      // If user is logged in, show the drawer, otherwise show the login button
+      drawer: username != null ? drawerfunc() : null,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -195,7 +197,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           SliverList(
             delegate: SliverChildListDelegate([
               searchbarfunc(),
-              // Center(child: Text('Sample Text')),
               Container(
                 height: 45,
                 width: MediaQuery.of(context).size.width,
@@ -225,7 +226,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     Upcoming(),
                   ],
                 ),
-              )
+              ),
             ]),
           ),
         ],

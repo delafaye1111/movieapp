@@ -8,7 +8,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-
+import 'package:movieapp/HomePage/SectionPage/favoriteList.dart';
 class drawerfunc extends StatefulWidget {
   const drawerfunc({
     super.key,
@@ -136,6 +136,10 @@ class _drawerfuncState extends State<drawerfunc> {
             listtilefunc('Home', Icons.home, ontap: () {
               //close drawer
               Navigator.pop(context);
+            }),
+             listtilefunc('Favorite', Icons.favorite, ontap: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => FavoriteMovies()));
             }),
             listtilefunc('About', Icons.info, ontap: () {
               showDialog(

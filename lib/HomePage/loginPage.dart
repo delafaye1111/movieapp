@@ -25,7 +25,8 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => _isLoading = true);
 
-    final url = Uri.parse("http://192.168.1.100/api/login");
+    final url = Uri.parse("http://192.168.1.47:3000/api/login");
+    print("🌍 Connecting to: $url");
 
     try {
       final response = await http.post(
@@ -37,6 +38,9 @@ class _LoginPageState extends State<LoginPage> {
         }),
       );
 
+      
+      print("📥 Response Code: ${response.statusCode}");
+      print("📥 Response Body: ${response.body}");
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
@@ -54,6 +58,7 @@ class _LoginPageState extends State<LoginPage> {
         _showError(responseData["error"] ?? "เกิดข้อผิดพลาดในการล็อคอิน");
       }
     } catch (e) {
+      
       print(e);
       _showError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์");
     }
