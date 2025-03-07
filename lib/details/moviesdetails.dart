@@ -185,10 +185,10 @@ class _MoviesDetailsState extends State<MoviesDetails> {
                   ),
                   SliverList(
                     delegate: SliverChildListDelegate([
-                      addtofavoriate(
+                      addtofavorite(
                         id: widget.id,
                         type: 'movie',
-                        Details: MoviesDetails,
+                        details: MoviesDetails.isNotEmpty ? MoviesDetails[0] : {},
                       ),
                       Column(
                         children: [

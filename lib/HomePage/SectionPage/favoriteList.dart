@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:movieapp/SqfLitelocalstorage/NoteDbHelper.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:movieapp/details/checker.dart';
 
 class FavoriteMovies extends StatefulWidget {
@@ -12,15 +13,98 @@ class FavoriteMovies extends StatefulWidget {
 }
 
 class _FavoriteMoviesState extends State<FavoriteMovies> {
-  int svalue = 1;
+  List<Map<String, dynamic>> favoriteMovies = [];
+  bool isLoading = true;
 
-  SortByChecker(int sortvalue) {
-    if (sortvalue == 1) {
-      return FavMovielist().queryAllSortedDate();
-    } else if (sortvalue == 2) {
-      return FavMovielist().queryAllSorted();
-    } else if (sortvalue == 3) {
-      return FavMovielist().queryAllSortedRating();
+  @override
+  void initState() {
+    super.initState();
+    fetchFavoriteMovies();
+  }
+
+  Future<void> fetchFavoriteMovies() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null) {
+      setState(() {
+        favoriteMovies = [];
+        isLoading = false;
+      });
+      Fluttertoast.showToast(msg: "Please log in to view your favorites.");
+      return;
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://192.168.1.100:3000/api/favorite'), // เปลี่ยนเป็น URL API ของคุณ
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body)['data'] as List;
+        setState(() {
+          favoriteMovies = data.cast<Map<String, dynamic>>();
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          favoriteMovies = [];
+          isLoading = false;
+        });
+        print('Failed to load favorite movies: ${response.statusCode}');
+        Fluttertoast.showToast(msg: "Failed to load favorite movies.");
+      }
+    } catch (e) {
+      setState(() {
+        favoriteMovies = [];
+        isLoading = false;
+      });
+      print('Failed to load favorite movies: $e');
+      Fluttertoast.showToast(msg: "An error occurred.");
+    }
+  }
+
+  Future<void> removeFavoriteMovie(int tmdbId, String tmdbType) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null) {
+      Fluttertoast.showToast(msg: "Please log in first");
+      return;
+    }
+
+    try {
+      final response = await http.delete(
+        Uri.parse('http://192.168.1.100:3000/api/favorite'), // เปลี่ยนเป็น URL API ของคุณ
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'tmdbId': tmdbId,
+          'tmdbType': tmdbType,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          favoriteMovies.removeWhere((movie) => movie['tmdbid'] == tmdbId.toString() && movie['tmdbtype'] == tmdbType); // แปลง tmdbId เป็น String
+        });
+        Fluttertoast.showToast(msg: "Removed from Favorite");
+      } else {
+        print('Failed to remove favorite movie: ${response.statusCode}');
+        Fluttertoast.showToast(msg: "Failed to remove favorite movie.");
+      }
+    } catch (e) {
+      print('Failed to remove favorite movie: $e');
+      Fluttertoast.showToast(msg: "An error occurred.");
     }
   }
 
@@ -33,134 +117,75 @@ class _FavoriteMoviesState extends State<FavoriteMovies> {
         backgroundColor: Color.fromRGBO(18, 18, 18, 0.9),
         title: Text('Favorite Movies'),
       ),
-      body: SingleChildScrollView(
-          child: Column(
-        children: [
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.07,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
+      body: isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                color: Colors.amber,
+              ),
+            )
+          : favoriteMovies.isEmpty
+              ? Center(
                   child: Text(
-                    'Sort By',
+                    "No favorite movies yet.",
                     style: TextStyle(color: Colors.white),
                   ),
-                ),
-                DropdownButton(
-                  iconEnabledColor: Colors.white,
-                  focusColor: Colors.white,
-                  iconDisabledColor: Colors.white,
-                  dropdownColor: Color.fromRGBO(18, 18, 18, 0.5),
-                  value: svalue,
-                  items: [
-                    DropdownMenuItem(
-                      value: 1,
-                      child: Text('View All',
-                          style: TextStyle(color: Colors.white)),
-                    ),
-                    DropdownMenuItem(
-                      value: 2,
-                      child: Text('Sort by Name',
-                          style: TextStyle(color: Colors.white)),
-                    ),
-                    DropdownMenuItem(
-                      value: 3,
-                      child: Text('Sort by Rating',
-                          style: TextStyle(color: Colors.white)),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      svalue = value as int;
-                    });
-                  },
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height * 0.8,
-              //query all data from database and show in listview builder here
-              child: FutureBuilder(
-                future: SortByChecker(svalue),
-                builder: (context,
-                    AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
-                  if (snapshot.hasData) {
-                    return ListView.builder(
-                      itemCount: snapshot.data!.length,
-                      itemBuilder: (context, index) {
-                        return Dismissible(
-                            background: Container(
-                              color: Colors.red,
-                              child: Icon(Icons.delete),
-                            ),
-                            onDismissed: (direction) {
-                              FavMovielist()
-                                  .delete(snapshot.data![index]['id']);
-                              Fluttertoast.showToast(
-                                  msg: "Deleted from Favoriate",
-                                  toastLength: Toast.LENGTH_SHORT,
-                                  gravity: ToastGravity.BOTTOM,
-                                  timeInSecForIosWeb: 1,
-                                  backgroundColor:
-                                      Color.fromRGBO(18, 18, 18, 1),
-                                  textColor: Colors.white,
-                                  fontSize: 16.0);
-                            },
-                            key: UniqueKey(),
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.push(context, MaterialPageRoute(
-                                  builder: (context) {
-                                    return descriptioncheckui(
-                                        snapshot.data![index]['tmdbid']
-                                            .toString(),
-                                        snapshot.data![index]['tmdbtype']
-                                            .toString());
-                                  },
-                                ));
-                              },
-                              child: Card(
-                                child: ListTile(
-                                  tileColor: Color.fromRGBO(24, 24, 24, 1),
-                                  textColor: Colors.white,
-                                  title:
-                                      Text(snapshot.data![index]['tmdbname'] ?? 'No name'),
-                                  subtitle: Row(children: [
-                                    Icon(
-                                      Icons.star,
-                                      color: Colors.yellow,
-                                      size: 20,
-                                    ),
-                                    SizedBox(
-                                      width: 10,
-                                    ),
-                                    Text(snapshot.data![index]['tmdbrating'])
-                                  ]),
-                                  trailing:
-                                      Text(snapshot.data![index]['tmdbtype']),
+                )
+              : ListView.builder(
+                  itemCount: favoriteMovies.length,
+                  itemBuilder: (context, index) {
+                    final movie = favoriteMovies[index];
+                    return Dismissible(
+                      background: Container(
+                        color: Colors.red,
+                        child: Icon(Icons.delete),
+                      ),
+                      onDismissed: (direction) {
+                        removeFavoriteMovie(int.parse(movie['tmdbid']), movie['tmdbtype']); // แปลง movie['tmdbid'] เป็น int
+                      },
+                      key: UniqueKey(),
+                      child: GestureDetector(
+                        onTap: () {
+                          int? tmdbId = int.tryParse(movie['tmdbid'].toString());
+                          if (tmdbId != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => descriptioncheckui(
+                                  tmdbId,
+                                  movie['tmdbtype'],
                                 ),
                               ),
-                            ));
-                      },
-                    );
-                  } else {
-                    return Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.amber,
+                            );
+                          } else {
+                            print('Error: tmdbid is not a valid integer');
+                            Fluttertoast.showToast(msg: "Invalid movie ID.");
+                          }
+                        },
+                        child: Card(
+                          child: ListTile(
+                            tileColor: Color.fromRGBO(24, 24, 24, 1),
+                            textColor: Colors.white,
+                            title: Text(movie['tmdbname'] ?? 'No name'),
+                            subtitle: Row(
+                              children: [
+                                Icon(
+                                  Icons.star,
+                                  color: Colors.yellow,
+                                  size: 20,
+                                ),
+                                SizedBox(
+                                  width: 10,
+                                ),
+                                Text(movie['tmdbrating'].toString()),
+                              ],
+                            ),
+                            trailing: Text(movie['tmdbtype']),
+                          ),
+                        ),
                       ),
                     );
-                  }
-                },
-              ),
-            ),
-          ),
-        ],
-      )),
+                  },
+                ),
     );
   }
 }

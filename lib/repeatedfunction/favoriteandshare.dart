@@ -1,300 +1,206 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:movieapp/SqfLitelocalstorage/NoteDbHelper.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
-// Widget addtofavoriate(id, type, Details, context) {}
+class addtofavorite extends StatefulWidget {
+  final int id;
+  final String type;
+  final Map<String, dynamic> details;
 
-class addtofavoriate extends StatefulWidget {
-  var id, type, Details;
-  addtofavoriate({super.key, 
-    this.id,
-    this.type,
-    this.Details,
+  addtofavorite({
+    required this.id,
+    required this.type,
+    required this.details,
   });
 
   @override
-  State<addtofavoriate> createState() => _addtofavoriateState();
+  _addtofavoriteState createState() => _addtofavoriteState();
 }
 
-class _addtofavoriateState extends State<addtofavoriate> {
-  Future checkfavoriate() async {
-    FavMovielist()
-        .search(widget.id.toString(), widget.Details[0]['title'].toString(),
-            widget.type)
-        .then((value) {
-      if (value == 0) {
-        print('notanythingfound');
-        favoriatecolor = Colors.white;
-      } else {
-        //print the tmdbname and tmdbid and tmdbtype and tmdbrating from database
-
-        print('surelyfound');
-        favoriatecolor = Colors.red;
-      }
-    });
-    await Future.delayed(Duration(milliseconds: 100));
-  }
-
-  Color? favoriatecolor;
-
-  addatatbase(
-    id,
-    name,
-    type,
-    rating,
-    customcolor,
-  ) async {
-    if (customcolor == Colors.white) {
-      FavMovielist().insert({
-        'tmdbid': id,
-        'tmdbtype': type,
-        'tmdbname': name,
-        'tmdbrating': rating,
-      });
-      favoriatecolor = Colors.red;
-      Fluttertoast.showToast(
-          msg: "Added to Favorite",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.green,
-          textColor: Colors.white,
-          fontSize: 16.0);
-    } else if (customcolor == Colors.red) {
-      FavMovielist().deletespecific(id, type);
-      favoriatecolor = Colors.white;
-      Fluttertoast.showToast(
-          msg: "Removed from Favorite",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0);
-    }
-  }
+class _addtofavoriteState extends State<addtofavorite> {
+  Color? favoriteColor;
+  bool isLoading = true;
+  bool isFavorite = false; // เพิ่มตัวแปร state สำหรับเก็บสถานะ favorite
 
   @override
   void initState() {
     super.initState();
-    checkfavoriate();
+    checkFavorite();
+  }
+
+  Future<void> checkFavorite() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null) {
+      setState(() {
+        favoriteColor = Colors.white;
+        isLoading = false;
+        isFavorite = false;
+      });
+      return;
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://192.168.1.100:3000/api/favorite'), // เปลี่ยนเป็น URL API ของคุณ
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body)['data'] as List;
+        print('Favorite data: $data'); // เพิ่ม log นี้
+        final favorite = data.any((item) =>
+            item['tmdbid'] == widget.id.toString() && item['tmdbtype'] == widget.type); // แปลง widget.id เป็น String
+
+        print('Widget ID: ${widget.id}, Widget Type: ${widget.type}'); // เพิ่ม log นี้
+        print('Is favorite: $favorite'); // เพิ่ม log นี้
+
+        setState(() {
+          isFavorite = favorite;
+          favoriteColor = isFavorite ? Colors.red : Colors.white;
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          favoriteColor = Colors.white;
+          isLoading = false;
+          isFavorite = false;
+        });
+        print('Error checking favorites: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() {
+        favoriteColor = Colors.white;
+        isLoading = false;
+        isFavorite = false;
+      });
+      print('Error checking favorites: $e');
+    }
+  }
+
+  Future<void> toggleFavorite() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null) {
+      Fluttertoast.showToast(msg: "Please login first");
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      if (isFavorite) {
+        // Remove from favorite
+        final response = await http.delete(
+          Uri.parse('http://192.168.1.100:3000/api/favorite'), // เปลี่ยนเป็น URL API ของคุณ
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: json.encode({
+            'tmdbId': widget.id,
+            'tmdbType': widget.type,
+          }),
+        );
+
+        if (response.statusCode == 200) {
+          setState(() {
+            favoriteColor = Colors.white;
+            isLoading = false;
+            isFavorite = false;
+          });
+          Fluttertoast.showToast(msg: "Removed from Favorite");
+        } else {
+          setState(() {
+            isLoading = false;
+          });
+          Fluttertoast.showToast(msg: "Failed to remove from favorite");
+          print('Error removing from favorites: ${response.statusCode}');
+        }
+      } else {
+        // Add to favorite
+        final response = await http.post(
+          Uri.parse('http://192.168.1.100:3000/api/favorite'), // เปลี่ยนเป็น URL API ของคุณ
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: json.encode({
+            'tmdbId': widget.id,
+            'tmdbName': widget.details['title'],
+            'tmdbType': widget.type,
+            'rating': widget.details['vote_average'],
+          }),
+        );
+
+        if (response.statusCode == 200) {
+          setState(() {
+            favoriteColor = Colors.red;
+            isLoading = false;
+            isFavorite = true;
+          });
+          Fluttertoast.showToast(msg: "Added to Favorite");
+        } else {
+          setState(() {
+            isLoading = false;
+          });
+          Fluttertoast.showToast(msg: "Failed to add to favorite");
+          print('Error adding to favorites: ${response.statusCode}');
+        }
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      Fluttertoast.showToast(msg: "An error occurred");
+      print('Error toggling favorites: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-        height: 80,
-        width: MediaQuery.of(context).size.width,
-        child:
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+      height: 80,
+      width: MediaQuery.of(context).size.width,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
           Container(
             alignment: Alignment.centerLeft,
             width: MediaQuery.of(context).size.width / 2,
-            child: FutureBuilder(
-                future: checkfavoriate(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done) {
-                    return Container(
-                      height: 55,
-                      margin: EdgeInsets.only(top: 20),
-                      padding: EdgeInsets.all(8),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        height: 50,
-                        width: 50,
-                        child: IconButton(
-                          icon: Icon(Icons.favorite,
-                              color: favoriatecolor, size: 30),
-                          onPressed: () {
-                            print('pressed');
-                            setState(() {
-                              addatatbase(
-                                widget.id.toString(),
-                                widget.Details[0]['title'].toString(),
-                                widget.type,
-                                widget.Details[0]['vote_average'].toString(),
-                                favoriatecolor,
-                              );
-                            });
-                          },
-                        ),
+            child: isLoading
+                ? CircularProgressIndicator()
+                : Container(
+                    height: 55,
+                    margin: EdgeInsets.only(top: 20),
+                    padding: EdgeInsets.all(8),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                    );
-                  } else {
-                    return SizedBox(
-                      height: 55,
-                      width: MediaQuery.of(context).size.width,
-                    );
-                  }
-                }),
+                      height: 50,
+                      width: 50,
+                      child: IconButton(
+                        icon: Icon(Icons.favorite, color: favoriteColor, size: 30),
+                        onPressed: toggleFavorite,
+                      ),
+                    ),
+                  ),
           ),
-          // GestureDetector(
-          //   onTap: () {
-          //     //show dialog box with share option and copy link option and share to social media option and copy link option and share to social media option
-          //     showDialog(
-          //         context: context,
-          //         builder: (context) {
-          //           return AlertDialog(
-          //             backgroundColor: Color.fromRGBO(18, 18, 18, 1),
-          //             title: Text(
-          //               "MovieApp",
-          //             ),
-          //             content: SizedBox(
-          //               height: 180,
-          //               child: Column(
-          //                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-          //                 children: [
-          //                   GestureDetector(
-          //                     onTap: () {},
-          //                     child: Container(
-          //                         padding: EdgeInsets.all(10),
-          //                         decoration: BoxDecoration(
-          //                             color: Colors.amber.withOpacity(0.6),
-          //                             borderRadius: BorderRadius.circular(10)),
-          //                         child: FittedBox(
-          //                           fit: BoxFit.scaleDown,
-          //                           child: Row(children: [
-          //                             Icon(Icons.share,
-          //                                 color: Colors.white, size: 20),
-          //                             SizedBox(width: 10),
-          //                             Text("Share to Social Media")
-          //                           ]),
-          //                         )),
-          //                   ),
-          //                   SizedBox(height: 20),
-          //                   FittedBox(
-          //                     fit: BoxFit.scaleDown,
-          //                     child: Row(
-          //                       mainAxisAlignment:
-          //                           MainAxisAlignment.spaceBetween,
-          //                       children: [
-          //                         GestureDetector(
-          //                           onTap: () async {
-          //                             var url =
-          //                                 "https://www.facebook.com/sharer/sharer.php?u=https://www.themoviedb.org/$widget.type/$widget.id";
-          //                             await launch(url);
-          //                           },
-          //                           child: Container(
-          //                               padding: EdgeInsets.all(10),
-          //                               decoration: BoxDecoration(
-          //                                   color: Colors.blue,
-          //                                   borderRadius:
-          //                                       BorderRadius.circular(10)),
-          //                               child: Row(children: [
-          //                                 Icon(Icons.facebook_rounded,
-          //                                     color: Colors.white, size: 30),
-          //                               ])),
-          //                         ),
-          //                         SizedBox(width: 10),
-          //                         GestureDetector(
-          //                           onTap: () async {
-          //                             var url =
-          //                                 //share to whatsapp
-          //                                 "https://wa.me/?text=Check%20out%20this%20link:%20https://www.themoviedb.org/$widget.type/$widget.id";
-          //                             await launch(url);
-          //                           },
-          //                           child: Container(
-          //                               padding: EdgeInsets.all(10),
-          //                               decoration: BoxDecoration(
-          //                                   color: Colors.green,
-          //                                   borderRadius:
-          //                                       BorderRadius.circular(10)),
-          //                               child: Row(children: [
-          //                                 Icon(FontAwesomeIcons.whatsapp,
-          //                                     color: Colors.white, size: 30),
-          //                               ])),
-          //                         ),
-          //                         SizedBox(width: 10),
-          //                         GestureDetector(
-          //                           onTap: () async {
-          //                             var url =
-          //                                 "https://www.linkedin.com/shareArticle?mini=true&url=https://www.themoviedb.org/$widget.type/$widget.id&title=Movie Hunt&summary=Check%20out%20this%20link:%20https://www.themoviedb.org/$widget.type/$widget.id&source=Movie%20Hunt";
-          //                             await launch(url);
-          //                           },
-          //                           child: Container(
-          //                               padding: EdgeInsets.all(10),
-          //                               decoration: BoxDecoration(
-          //                                   color: Colors.blue,
-          //                                   borderRadius:
-          //                                       BorderRadius.circular(10)),
-          //                               child: Row(children: [
-          //                                 Icon(FontAwesomeIcons.linkedin,
-          //                                     color: Colors.white, size: 30),
-          //                               ])),
-          //                         ),
-          //                         SizedBox(width: 10),
-          //                         GestureDetector(
-          //                           onTap: () async {
-          //                             var url =
-          //                                 "https://twitter.com/intent/tweet?text=Check%20out%20this%20link:%20https://www.themoviedb.org/$widget.type/$widget.id";
-          //                             await launch(url);
-          //                           },
-          //                           child: Container(
-          //                               padding: EdgeInsets.all(10),
-          //                               decoration: BoxDecoration(
-          //                                   color: Colors.blueAccent,
-          //                                   borderRadius:
-          //                                       BorderRadius.circular(10)),
-          //                               child: Row(children: [
-          //                                 Icon(FontAwesomeIcons.twitter,
-          //                                     color: Colors.white, size: 30),
-          //                               ])),
-          //                         ),
-          //                       ],
-          //                     ),
-          //                   ),
-          //                   SizedBox(height: 20),
-          //                   GestureDetector(
-          //                     onTap: () async {
-          //                       //copy link
-          //                       await Clipboard.setData(ClipboardData(
-          //                           text:
-          //                               "https://www.themoviedb.org/$widget.type/$widget.id"));
-          //                       Navigator.pop(context);
-          //                       //slutter toast for the message copied to clipboard
-          //                       Fluttertoast.showToast(
-          //                           msg: "Link Copied to Clipboard",
-          //                           toastLength: Toast.LENGTH_SHORT,
-          //                           gravity: ToastGravity.BOTTOM,
-          //                           timeInSecForIosWeb: 1,
-          //                           backgroundColor: Colors.white,
-          //                           textColor: Colors.black,
-          //                           fontSize: 16.0);
-          //                     },
-          //                     child: Container(
-          //                         padding: EdgeInsets.all(10),
-          //                         decoration: BoxDecoration(
-          //                             color: Colors.amber.withOpacity(0.6),
-          //                             borderRadius: BorderRadius.circular(10)),
-          //                         child: Row(children: [
-          //                           Icon(Icons.copy,
-          //                               color: Colors.white, size: 20),
-          //                           SizedBox(width: 10),
-          //                           Text("Copy Link")
-          //                         ])),
-          //                   ),
-          //                 ],
-          //               ),
-          //             ),
-          //           );
-          //         });
-          //   },
-          //   child: Container(
-          //       padding: EdgeInsets.all(10),
-          //       decoration: BoxDecoration(
-          //           color: Colors.amber.withOpacity(0.6),
-          //           borderRadius: BorderRadius.circular(10)),
-          //       child: Row(children: [
-          //         Icon(Icons.share, color: Colors.white, size: 20),
-          //         SizedBox(width: 10),
-          //         Text("Share")
-          //       ])),
-          // )
-        ]));
+        ],
+      ),
+    );
   }
 }

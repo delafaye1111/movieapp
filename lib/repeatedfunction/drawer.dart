@@ -9,10 +9,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:movieapp/HomePage/SectionPage/favoriteList.dart';
+import 'package:movieapp/HomePage/loginPage.dart';
+
 class drawerfunc extends StatefulWidget {
-  const drawerfunc({
-    super.key,
-  });
+  const drawerfunc({super.key});
 
   @override
   State<drawerfunc> createState() => _drawerfuncState();
@@ -20,6 +20,7 @@ class drawerfunc extends StatefulWidget {
 
 class _drawerfuncState extends State<drawerfunc> {
   File? _image;
+  String? _username;
 
   Future<void> SelectImage() async {
     final pickedfile =
@@ -31,19 +32,53 @@ class _drawerfuncState extends State<drawerfunc> {
       );
       SharedPreferences sp = await SharedPreferences.getInstance();
       sp.setString('imagepath', cropped!.path);
-      _image = cropped as File?;
+      setState(() {
+        _image = File(cropped.path);
+      });
     } else {
       print('No image selected.');
     }
   }
 
+  Future<void> _logout() async {
+    SharedPreferences sp = await SharedPreferences.getInstance();
+    await sp.clear();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginPage()),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
-    SharedPreferences.getInstance().then((sp) {
-      setState(() {
-        _image = File(sp.getString('imagepath')!);
-      });
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    SharedPreferences sp = await SharedPreferences.getInstance();
+    String? imagePath = sp.getString('imagepath');
+    print('ImagePath from SharedPreferences: $imagePath');
+
+    if (imagePath != null && imagePath.isNotEmpty) {
+      try {
+        File imageFile = File(imagePath);
+        if (await imageFile.exists()) {
+          setState(() {
+            _image = imageFile;
+          });
+        } else {
+          print('File does not exist: $imagePath');
+        }
+      } catch (e) {
+        print('Error loading image: $e');
+      }
+    } else {
+      print('ImagePath is null or empty');
+    }
+
+    setState(() {
+      _username = sp.getString('username');
     });
   }
 
@@ -58,12 +93,6 @@ class _drawerfuncState extends State<drawerfunc> {
         onPageFinished: (String url) {},
         onHttpError: (HttpResponseError error) {},
         onWebResourceError: (WebResourceError error) {},
-        // onNavigationRequest: (NavigationRequest request) {
-        //   if (request.url.startsWith('https://www.youtube.com/')) {
-        //     return NavigationDecision.prevent;
-        //   }
-        //   return NavigationDecision.navigate;
-        // },
       ),
     )
     ..loadRequest(Uri.parse('https://niranjandahal.com.np'));
@@ -79,12 +108,6 @@ class _drawerfuncState extends State<drawerfunc> {
         onPageFinished: (String url) {},
         onHttpError: (HttpResponseError error) {},
         onWebResourceError: (WebResourceError error) {},
-        // onNavigationRequest: (NavigationRequest request) {
-        //   if (request.url.startsWith('https://www.youtube.com/')) {
-        //     return NavigationDecision.prevent;
-        //   }
-        //   return NavigationDecision.navigate;
-        // },
       ),
     )
     ..loadRequest(Uri.parse('https://dahalniranjan.com.np'));
@@ -104,29 +127,38 @@ class _drawerfuncState extends State<drawerfunc> {
                     GestureDetector(
                       onTap: () async {
                         await SelectImage();
-                        //toast message
                         Fluttertoast.showToast(
-                            msg: "Image Changed",
-                            toastLength: Toast.LENGTH_SHORT,
-                            gravity: ToastGravity.BOTTOM,
-                            timeInSecForIosWeb: 1,
-                            backgroundColor: Colors.grey,
-                            textColor: Colors.white,
-                            fontSize: 16.0);
+                          msg: "Image Changed",
+                          toastLength: Toast.LENGTH_SHORT,
+                          gravity: ToastGravity.BOTTOM,
+                          timeInSecForIosWeb: 1,
+                          backgroundColor: Colors.grey,
+                          textColor: Colors.white,
+                          fontSize: 16.0,
+                        );
                       },
                       child: _image == null
                           ? CircleAvatar(
                               radius: 45,
-                              backgroundImage: AssetImage('assets/user.png'),
+                              backgroundImage: AssetImage('assets/user.jpg'),
+                              backgroundColor: Colors.transparent,
                             )
-                          : CircleAvatar(
-                              radius: 45,
-                              backgroundImage: FileImage(_image!),
-                            ),
+                          : File(_image!.path).existsSync()
+                              ? CircleAvatar(
+                                  radius: 45,
+                                  backgroundImage: FileImage(_image!),
+                                  backgroundColor: Colors.transparent,
+                                )
+                              : CircleAvatar(
+                                  radius: 45,
+                                  backgroundImage:
+                                      AssetImage('assets/user.jpg'),
+                                  backgroundColor: Colors.transparent,
+                                ),
                     ),
                     SizedBox(height: 6),
                     Text(
-                      'Welcome',
+                      'Welcome${_username != null ? ', ${_username!}' : ''}',
                       style: TextStyle(color: Colors.white, fontSize: 20),
                     )
                   ],
@@ -134,10 +166,9 @@ class _drawerfuncState extends State<drawerfunc> {
               ),
             ),
             listtilefunc('Home', Icons.home, ontap: () {
-              //close drawer
               Navigator.pop(context);
             }),
-             listtilefunc('Favorite', Icons.favorite, ontap: () {
+            listtilefunc('Favorite', Icons.favorite, ontap: () {
               Navigator.push(context,
                   MaterialPageRoute(builder: (context) => FavoriteMovies()));
             }),
@@ -159,9 +190,7 @@ class _drawerfuncState extends State<drawerfunc> {
                     );
                   });
             }),
-            listtilefunc('Quit', Icons.exit_to_app_rounded, ontap: () {
-              SystemNavigator.pop();
-            }),
+            listtilefunc('Logout', Icons.logout, ontap: _logout),
           ],
         ),
       ),

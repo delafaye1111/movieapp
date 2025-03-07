@@ -203,10 +203,10 @@ class _TvSeriesDetailsState extends State<TvSeriesDetails> {
                   ),
                   SliverList(
                     delegate: SliverChildListDelegate([
-                       addtofavoriate(
+                       addtofavorite(
                         id: widget.id,
                         type: 'tv',
-                        Details: TvSeriesDetails,
+                        details: TvSeriesDetails.isNotEmpty ? TvSeriesDetails[0] : {},
                       ),
                       Column(
                         children: [

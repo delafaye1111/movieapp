@@ -1,21 +1,19 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import 'homePage.dart';
-import 'registerPage.dart'; // Import the Register Page
+import 'loginPage.dart';
 
-class LoginPage extends StatefulWidget {
+class RegisterPage extends StatefulWidget {
   @override
-  _LoginPageState createState() => _LoginPageState();
+  _RegisterPageState createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
 
-  Future<void> _login() async {
+  Future<void> _register() async {
     String username = _usernameController.text;
     String password = _passwordController.text;
 
@@ -26,7 +24,7 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => _isLoading = true);
 
-    final url = Uri.parse("http://192.168.1.100:3000/api/login");
+    final url = Uri.parse("http://192.168.1.100:3000/api/register");
     print("🌍 Connecting to: $url");
 
     try {
@@ -43,19 +41,14 @@ class _LoginPageState extends State<LoginPage> {
       print("📥 Response Body: ${response.body}");
       final responseData = jsonDecode(response.body);
 
-      if (response.statusCode == 200) {
-        String token = responseData["token"];
-
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', token);
-        await prefs.setString('username', username);
-
+      if (response.statusCode == 201) {
+        _showSuccess("สมัครสมาชิกสำเร็จ");
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()),
+          MaterialPageRoute(builder: (context) => LoginPage()),
         );
       } else {
-        _showError(responseData["error"] ?? "เกิดข้อผิดพลาดในการล็อคอิน");
+        _showError(responseData["error"] ?? "เกิดข้อผิดพลาดในการสมัครสมาชิก");
       }
     } catch (e) {
       print(e);
@@ -67,14 +60,20 @@ class _LoginPageState extends State<LoginPage> {
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(content: Text(message, style: TextStyle(color: Colors.white)), backgroundColor: Colors.red),
+    );
+  }
+
+  void _showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message, style: TextStyle(color: Colors.white)), backgroundColor: Colors.green),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Login')),
+      appBar: AppBar(title: Text('Register')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -92,19 +91,19 @@ class _LoginPageState extends State<LoginPage> {
             _isLoading
                 ? CircularProgressIndicator()
                 : ElevatedButton(
-                    onPressed: _login,
-                    child: Text('Login'),
+                    onPressed: _register,
+                    child: Text('Register'),
                   ),
             SizedBox(height: 20),
             GestureDetector(
               onTap: () {
-                Navigator.push(
+                Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => RegisterPage()),
+                  MaterialPageRoute(builder: (context) => LoginPage()),
                 );
               },
               child: Text(
-                "Don't have an account? Register here",
+                "Already have an account? Login here",
                 style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
               ),
             ),
