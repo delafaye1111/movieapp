@@ -24,7 +24,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     setState(() => _isLoading = true);
 
-    final url = Uri.parse("http://192.168.1.100:3000/api/register");
+    final url = Uri.parse("https://movieapp-backend-nine.vercel.app/api/register");
     print("🌍 Connecting to: $url");
 
     try {

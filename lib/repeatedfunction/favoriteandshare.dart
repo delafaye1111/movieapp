@@ -49,7 +49,7 @@ class _addtofavoriteState extends State<addtofavorite> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.1.100:3000/api/favorite'), // เปลี่ยนเป็น URL API ของคุณ
+        Uri.parse('https://movieapp-backend-nine.vercel.app/api/favorite'), // เปลี่ยนเป็น URL API ของคุณ
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -104,7 +104,7 @@ class _addtofavoriteState extends State<addtofavorite> {
       if (isFavorite) {
         // Remove from favorite
         final response = await http.delete(
-          Uri.parse('http://192.168.1.100:3000/api/favorite'), // เปลี่ยนเป็น URL API ของคุณ
+          Uri.parse('https://movieapp-backend-nine.vercel.app/api/favorite'), // เปลี่ยนเป็น URL API ของคุณ
           headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'application/json',
@@ -132,7 +132,7 @@ class _addtofavoriteState extends State<addtofavorite> {
       } else {
         // Add to favorite
         final response = await http.post(
-          Uri.parse('http://192.168.1.100:3000/api/favorite'), // เปลี่ยนเป็น URL API ของคุณ
+          Uri.parse('https://movieapp-backend-nine.vercel.app/api/favorite'), // เปลี่ยนเป็น URL API ของคุณ
           headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'application/json',

@@ -26,7 +26,7 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => _isLoading = true);
 
-    final url = Uri.parse("http://192.168.1.100:3000/api/login");
+    final url = Uri.parse("https://movieapp-backend-nine.vercel.app/api/login");
     print("🌍 Connecting to: $url");
 
     try {
